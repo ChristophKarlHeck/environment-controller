@@ -35,7 +35,8 @@ def read_last_temperature(directory):
 
         # Assuming the temperature is in the second column (index 1)
         last_temperature = float(last_row[1])
-        return last_temperature
+        last_temperature_2 = float(last_row[3])
+        return (last_temperature + last_temperature_2)/2
 
     except Exception as e:
         print(f"Error reading temperature: {e}")
