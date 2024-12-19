@@ -12,9 +12,9 @@ WP04 = "134.34.225.135"  # Heater
 growLight = SmartPlug(WP03)
 heater = SmartPlug(WP04)
 
-wait_time_seconds = 10 #3600
-check_temp_time = 5 #60
-heater_time = 5# 30 
+wait_time_seconds = 3600
+check_temp_time = 60
+heater_time = 30 
 
 def read_last_temperature(directory):
     """
