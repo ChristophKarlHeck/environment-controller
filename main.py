@@ -12,9 +12,9 @@ WP04 = "134.34.225.135"  # Heater
 growLight = SmartPlug(WP03)
 heater = SmartPlug(WP04)
 
-wait_time_seconds = 3600
-check_temp_time = 60
-heater_time = 30 
+wait_time_seconds = 10 #3600
+check_temp_time = 5 #60
+heater_time = 5# 30 
 
 def read_last_temperature(directory):
     """
@@ -34,8 +34,8 @@ def read_last_temperature(directory):
         last_row = df.iloc[-1]
 
         # Assuming the temperature is in the second column (index 1)
-        last_temperature = float(last_row[1])
-        last_temperature_2 = float(last_row[3])
+        last_temperature = float(last_row[3])
+        last_temperature_2 = float(last_row[4])
         return (last_temperature + last_temperature_2)/2
 
     except Exception as e:
