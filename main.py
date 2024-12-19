@@ -75,6 +75,7 @@ def experiment_cycle(directory):
 
     # Turn on the grow light
     growLight.turn_on()
+    heater.turn_off()
     print("Grow light turned on.")
 
     # Wait for 1 hour
