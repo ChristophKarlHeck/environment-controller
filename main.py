@@ -112,12 +112,15 @@ def main():
     parser.add_argument("--directory", type=str, required=True, help="Directory containing P6*.csv files.")
     args = parser.parse_args()
 
+    heater.turn_off()
+    growLight.turn_off()
+
     directory = os.path.abspath(args.directory)
     if not os.path.exists(directory):
         print(f"Directory {directory} does not exist.")
         return
 
-    while True:
+   while True:
         current_time = datetime.now()
 
         # Check if the current time is within the active period (8:00 to 20:30)
