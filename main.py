@@ -91,7 +91,7 @@ def experiment_cycle(directory):
     print("Starting experiment cycle...")
 
     wait_time_seconds = 3600 # 3600 wait 1h
-    check_temp_time = 60 # 60 check temp every minute
+    check_temp_time = 20 # check temp every 20s
     heater_time = 30 # minutes to heat up and hold target temp
     temp_increase = 6 # 6 C°
 
