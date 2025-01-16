@@ -55,7 +55,7 @@ def wait_for_temperature_or_time(directory, start_temperature, target_increase, 
     """
 
     target_temperature = start_temperature + target_increase 
-    print(f"Starting 30-minute cycle. Target temperature: {target_temperature}°C.")
+    print(f"Starting {max_duration_minutes}-minute cycle. Target temperature: {target_temperature}°C.")
     start_time = datetime.now()
 
     while True:
@@ -64,7 +64,7 @@ def wait_for_temperature_or_time(directory, start_temperature, target_increase, 
 
         # Check if 30 minutes have passed
         if elapsed_time >= max_duration_minutes:
-            print(f"30 minutes elapsed. Turning off the heater.")
+            print(f"{max_duration_minutes} minutes elapsed. Turning off the heater.")
             break
 
         # Read the current temperature
@@ -84,7 +84,7 @@ def wait_for_temperature_or_time(directory, start_temperature, target_increase, 
         print(f"Current temperature: {current_temperature}°C. Elapsed time: {elapsed_time:.2f} minutes. Waiting...")
         time.sleep(check_temp_time)
 
-def execute_time_block(directory, block_type):
+def execute_time_block(directory, start_time, end_time, block_type):
     """
     Executes the scheduled task for the given time block type.
     """
@@ -98,10 +98,11 @@ def execute_time_block(directory, block_type):
             growLight.turn_on()
             heater.turn_off()
         case "heat":
+            growLight.turn_on()
             print("Heating block started.")
             start_temperature = read_last_temperature(directory)
             if start_temperature is not None:
-                wait_for_temperature_or_time(directory, start_temperature, 6, 30, 20)
+                wait_for_temperature_or_time(directory, start_temperature, 6, (end_time - start_time).total_seconds() / 60 , 20)
             heater.turn_off()
             print("Heating block ended.")
         case _:
@@ -118,33 +119,23 @@ def main():
         return
 
     # Define the schedule with block types
-    # schedule = {
-    #     "08:00-09:00": "wait",
-    #     "09:00-09:30": "heat",
-    #     "09:30-10:30": "wait",
-    #     "10:30-11:30": "wait",
-    #     "11:30-12:00": "heat",
-    #     "12:00-13:00": "wait",
-    #     "13:00-14:00": "wait",
-    #     "14:00-14:30": "heat",
-    #     "14:30-15:30": "wait",
-    #     "15:30-16:30": "wait",
-    #     "16:30-17:00": "heat",
-    #     "17:00-18:00": "wait",
-    #     "18:00-19:00": "wait",
-    #     "19:00-19:30": "heat",
-    #     "19:30-20:30": "wait"
-    #     "20:30-08:00": "sleep"  # Overnight sleep
-    # }
-
     schedule = {
-        "14:50-14:55": "wait",
-        "14:55-15:20": "heat",
-        "15:20-15:25": "wait",
-        "15:25-15:30": "wait",
-        "15:30-15:55": "heat",
-        "15:55-16:00": "wait",
-        "16:00-14:50": "sleep"  # Overnight sleep
+        "07:00-08:00": "wait",
+        "08:00-08:30": "heat",
+        "08:30-09:30": "wait",
+        "09:30-10:30": "wait",
+        "10:30-11:00": "heat",
+        "11:00-12:00": "wait",
+        "12:00-13:00": "wait",
+        "13:00-13:30": "heat",
+        "13:30-14:30": "wait",
+        "14:30-15:30": "wait",
+        "15:30-16:00": "heat",
+        "16:00-17:00": "wait",
+        "17:00-18:00": "wait",
+        "18:00-18:30": "heat",
+        "18:30-19:30": "wait",
+        "19:30-07:00": "sleep"  # Overnight sleep
     }
 
     heater.turn_off()
@@ -164,13 +155,15 @@ def main():
             )
 
             if end_time < start_time:
+                print(f"Executing block: {block_type} ({start_str}-{end_str})")
                 end_time += timedelta(days=1)  # Handle overnight case
 
             if start_time <= current_time < end_time:
-                execute_time_block(directory, block_type)
+                print(f"Executing block: {block_type} ({start_str}-{end_str})")
+                execute_time_block(directory, start_time, end_time, block_type)
                 break
 
-        # Sleep for a minute to avoid tight looping
+        # Sleep for 20 seconds to avoid tight looping
         time.sleep(20)
 
 if __name__ == "__main__":
