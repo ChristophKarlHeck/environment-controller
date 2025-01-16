@@ -84,88 +84,94 @@ def wait_for_temperature_or_time(directory, start_temperature, target_increase, 
         print(f"Current temperature: {current_temperature}°C. Elapsed time: {elapsed_time:.2f} minutes. Waiting...")
         time.sleep(check_temp_time)
 
-def experiment_cycle(directory):
+def execute_time_block(directory, block_type):
     """
-    Performs one cycle of the experiment.
+    Executes the scheduled task for the given time block type.
     """
-    print("Starting experiment cycle...")
+    match block_type:
+        case "sleep":
+            print("Sleeping during this block. Devices off.")
+            growLight.turn_off()
+            heater.turn_off()
+        case "wait":
+            print("Waiting during this block. Light on, heater off.")
+            growLight.turn_on()
+            heater.turn_off()
+        case "heat":
+            print("Heating block started.")
+            start_temperature = read_last_temperature(directory)
+            if start_temperature is not None:
+                wait_for_temperature_or_time(directory, start_temperature, 6, 30, 20)
+            heater.turn_off()
+            print("Heating block ended.")
+        case _:
+            print("Invalid block type.")
 
-    wait_time_seconds = 3600 # 3600 wait 1h
-    check_temp_time = 20 # check temp every 20s
-    heater_time = 30 # minutes to heat up and hold target temp
-    temp_increase = 6 # 6 C°
-
-    # Turn on the grow light
-    growLight.turn_on()
-    #heater.turn_off()
-    print("Grow light turned on.")
-
-    # Wait for 1 hour
-    time.sleep(wait_time_seconds)
-
-    # Turn on the heater
-    heater.turn_on()
-    print("Heater turned on.")
-
-    # Get the starting temperature
-    start_temperature = read_last_temperature(directory)
-    if start_temperature is None:
-        print("Could not read the starting temperature. Turning off heater.")
-        heater.turn_off()
-        return
-
-    # Wait for either 30 minutes or a temperature increase of 6°C
-    wait_for_temperature_or_time(directory, start_temperature, temp_increase, heater_time, check_temp_time)
-
-    # Turn off the heater
-    heater.turn_off()
-
-    print("Heater turned off.")
-
-    # Wait for 1 hour
-    time.sleep(wait_time_seconds)
-
-    
 def main():
-    """
-    Main function to run the experiment daily from 8:00 to 20:30.
-    """
-    parser = argparse.ArgumentParser(description="Run the experiment with temperature monitoring.")
+    parser = argparse.ArgumentParser(description="Run the experiment with fixed time blocks.")
     parser.add_argument("--directory", type=str, required=True, help="Directory containing P6*.csv files.")
     args = parser.parse_args()
-
-    heater.turn_off()
-    growLight.turn_off()
 
     directory = os.path.abspath(args.directory)
     if not os.path.exists(directory):
         print(f"Directory {directory} does not exist.")
         return
 
+    # Define the schedule with block types
+    # schedule = {
+    #     "08:00-09:00": "wait",
+    #     "09:00-09:30": "heat",
+    #     "09:30-10:30": "wait",
+    #     "10:30-11:30": "wait",
+    #     "11:30-12:00": "heat",
+    #     "12:00-13:00": "wait",
+    #     "13:00-14:00": "wait",
+    #     "14:00-14:30": "heat",
+    #     "14:30-15:30": "wait",
+    #     "15:30-16:30": "wait",
+    #     "16:30-17:00": "heat",
+    #     "17:00-18:00": "wait",
+    #     "18:00-19:00": "wait",
+    #     "19:00-19:30": "heat",
+    #     "19:30-20:30": "wait"
+    #     "20:30-08:00": "sleep"  # Overnight sleep
+    # }
+
+    schedule = {
+        "14:50-14:55": "wait",
+        "14:55-15:20": "heat",
+        "15:20-15:25": "wait",
+        "15:25-15:30": "wait",
+        "15:30-15:55": "heat",
+        "15:55-16:00": "wait",
+        "16:00-14:50": "sleep"  # Overnight sleep
+    }
+
+    heater.turn_off()
+    growLight.turn_off()
+
     while True:
         current_time = datetime.now()
+        current_hour_minute = current_time.strftime("%H:%M")
 
-        # Check if the current time is within the active period (8:00 to 20:30)
-        start_time = current_time.replace(hour=8, minute=0, second=0, microsecond=0)
-        end_time = current_time.replace(hour=20, minute=30, second=0, microsecond=0)
+        for time_range, block_type in schedule.items():
+            start_str, end_str = time_range.split("-")
+            start_time = datetime.strptime(start_str, "%H:%M").replace(
+                year=current_time.year, month=current_time.month, day=current_time.day
+            )
+            end_time = datetime.strptime(end_str, "%H:%M").replace(
+                year=current_time.year, month=current_time.month, day=current_time.day
+            )
 
-        if start_time <= current_time <= end_time:
-            experiment_cycle(directory)
-        else:
-            # Turn off devices outside active period
-            growLight.turn_off()
-            heater.turn_off()
-            print("Outside active period. Devices turned off.")
+            if end_time < start_time:
+                end_time += timedelta(days=1)  # Handle overnight case
 
-            # Wait until the next start time
-            if current_time > end_time:
-                next_start = start_time + timedelta(days=1)
-            else:
-                next_start = start_time
+            if start_time <= current_time < end_time:
+                execute_time_block(directory, block_type)
+                break
 
-            sleep_duration = (next_start - current_time).total_seconds()
-            print(f"Sleeping for {sleep_duration / 3600:.2f} hours until 8:00...")
-            time.sleep(sleep_duration)
+        # Sleep for a minute to avoid tight looping
+        time.sleep(20)
 
 if __name__ == "__main__":
     main()
