@@ -4,6 +4,9 @@ import time
 import os
 import pandas as pd
 import argparse
+import sys
+
+sys.stdout.reconfigure(line_buffering=True)
 
 # SmartPlug IPs
 WP03 = "134.34.225.167"  # Light
@@ -96,6 +99,8 @@ def control_heater(directory):
         return
 
     target_temperature = load_target_temperature()
+
+    print(f"Status: Current temperature: {current_temperature}, Target temperature: {target_temperature}")
 
     if target_temperature is None:
         target_temperature = current_temperature + temp_increase
