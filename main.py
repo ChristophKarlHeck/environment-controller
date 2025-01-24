@@ -15,7 +15,7 @@ WP04 = "134.34.225.135"  # Heater
 growLight = SmartPlug(WP03)
 heater = SmartPlug(WP04)
 
-temp_increase = 2 # 6°C temp increase
+temp_increase = 6 # 6°C temp increase
 
 def read_last_temperature(directory):
     """
@@ -145,39 +145,23 @@ def main():
         return
 
     # Define the schedule with block types
-    # schedule = {
-    #     "07:00-08:00": "wait",
-    #     "08:00-08:30": "heat",
-    #     "08:30-09:30": "wait",
-    #     "09:30-10:30": "wait",
-    #     "10:30-11:00": "heat",
-    #     "11:00-12:00": "wait",
-    #     "12:00-13:00": "wait",
-    #     "13:00-13:30": "heat",
-    #     "13:30-14:30": "wait",
-    #     "14:30-15:30": "wait",
-    #     "15:30-16:00": "heat",
-    #     "16:00-17:00": "wait",
-    #     "17:00-18:00": "wait",
-    #     "18:00-18:30": "heat",
-    #     "18:30-19:30": "wait",
-    #     "19:30-07:00": "sleep"  # Overnight sleep
-    # }
-
     schedule = {
-        "10:20-10:35": "heat",  # 15 minutes of heating
-        "10:35-10:50": "wait",  # 15 minutes of waiting
-        "10:50-11:05": "heat",  # 15 minutes of heating
-        "11:05-11:20": "wait",  # 15 minutes of waiting
-        "11:20-11:35": "heat",  # 15 minutes of heating
-        "11:35-11:50": "wait",  # 15 minutes of waiting
-        "11:50-12:05": "heat",  # 15 minutes of heating
-        "12:05-12:20": "wait",  # 15 minutes of waiting
-        "12:20-12:35": "heat",  # 15 minutes of heating
-        "12:35-12:50": "wait",  # 15 minutes of waiting
-        "12:50-13:05": "heat",  # 15 minutes of heating
-        "13:05-13:20": "wait",  # 15 minutes of waiting
-        "13:20-13:30": "heat",  # Final heat phase
+        "07:00-08:00": "wait",
+        "08:00-08:30": "heat",
+        "08:30-09:30": "wait",
+        "09:30-10:30": "wait",
+        "10:30-11:00": "heat",
+        "11:00-12:00": "wait",
+        "12:00-13:00": "wait",
+        "13:00-13:30": "heat",
+        "13:30-14:30": "wait",
+        "14:30-15:30": "wait",
+        "15:30-16:00": "heat",
+        "16:00-17:00": "wait",
+        "17:00-18:00": "wait",
+        "18:00-18:30": "heat",
+        "18:30-19:30": "wait",
+        "19:30-07:00": "sleep"  # Overnight sleep
     }
 
     heater.turn_off()
