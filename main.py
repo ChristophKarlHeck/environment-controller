@@ -163,20 +163,19 @@ def main():
     # }
 
     schedule = {
-    "11:10-11:25": "heat",  # 15 minutes of heating
-    "11:25-11:40": "wait",  # 15 minutes of waiting
-    "11:40-11:55": "heat",  # 15 minutes of heating
-    "11:55-12:10": "wait",  # 15 minutes of waiting
-    "12:10-12:25": "heat",  # 15 minutes of heating
-    "12:25-12:40": "wait",  # 15 minutes of waiting
-    "12:40-12:55": "heat",  # 15 minutes of heating
-    "12:55-13:10": "wait",  # 15 minutes of waiting
-    "13:10-13:25": "heat",  # 15 minutes of heating
-    "13:25-13:40": "wait",  # 15 minutes of waiting
-    "13:40-13:55": "heat",  # 15 minutes of heating
-    "13:55-14:10": "wait",  # 15 minutes of waiting
-    "14:10-14:30": "heat",  # Final heat phase
-    "14:30-15:30": "sleep"  # Sleep phase to test shutdown behavior
+        "10:20-10:35": "heat",  # 15 minutes of heating
+        "10:35-10:50": "wait",  # 15 minutes of waiting
+        "10:50-11:05": "heat",  # 15 minutes of heating
+        "11:05-11:20": "wait",  # 15 minutes of waiting
+        "11:20-11:35": "heat",  # 15 minutes of heating
+        "11:35-11:50": "wait",  # 15 minutes of waiting
+        "11:50-12:05": "heat",  # 15 minutes of heating
+        "12:05-12:20": "wait",  # 15 minutes of waiting
+        "12:20-12:35": "heat",  # 15 minutes of heating
+        "12:35-12:50": "wait",  # 15 minutes of waiting
+        "12:50-13:05": "heat",  # 15 minutes of heating
+        "13:05-13:20": "wait",  # 15 minutes of waiting
+        "13:20-13:30": "heat",  # Final heat phase
     }
 
     heater.turn_off()
