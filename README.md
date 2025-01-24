@@ -8,7 +8,7 @@ docker build -t environment-controller:latest .
 
 ### Create app dir
 ```bash
-mkdir app
+mkdir docker_temp
 ```
 
 ### Running the Docker Container
@@ -16,7 +16,7 @@ mkdir app
 docker run --name environment-controller-container \
   --restart=always \
   -v /media/chris/e110508e-b067-4ed5-87a8-5c548bdd8f77:/media/chris/e110508e-b067-4ed5-87a8-5c548bdd8f77 \
-  -v /home/chris/app:/app \
+  -v /home/chris/docker_temp:/docker_temp \
   --log-opt max-size=10m \
   --log-opt max-file=3 \
   -d \

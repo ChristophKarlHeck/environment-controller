@@ -12,7 +12,7 @@ WP04 = "134.34.225.135"  # Heater
 growLight = SmartPlug(WP03)
 heater = SmartPlug(WP04)
 
-temp_increase = 6 # 6°C temp increase
+temp_increase = 2 # 6°C temp increase
 
 def read_last_temperature(directory):
     """
@@ -57,7 +57,7 @@ def read_last_temperature(directory):
 def save_target_temperature(temp):
     """Saves the target temperature to a file."""
     try:
-        with open("/app/target_temp.txt", "w") as f:
+        with open("/docker_temp/target_temp.txt", "w") as f:
             f.write(str(temp))
     except Exception as e:
         print(f"Error saving target temperature: {e}")
@@ -66,7 +66,7 @@ def save_target_temperature(temp):
 def load_target_temperature():
     """Loads the target temperature from a file."""
     try:
-        with open("/app/target_temp.txt", "r") as f:
+        with open("/docker_temp/target_temp.txt", "r") as f:
             return float(f.read())
     except FileNotFoundError:
         return None
@@ -78,8 +78,8 @@ def load_target_temperature():
 def delete_target_temperature():
     """Deletes the target temperature file."""
     try:
-        if os.path.exists("/app/target_temp.txt"):
-            os.remove("/app/target_temp.txt")
+        if os.path.exists("/docker_temp/target_temp.txt"):
+            os.remove("/docker_temp/target_temp.txt")
     except Exception as e:
         print(f"Error deleting target temperature file: {e}")
 
@@ -124,10 +124,10 @@ def execute_time_block(directory, start_time, end_time, block_type):
             print("Waiting during this block. Light on, heater off.")
             growLight.turn_on()
             heater.turn_off()
+            delete_target_temperature()
         case "heat":
             growLight.turn_on()
             control_heater(directory)
-            delete_target_temperature()
             print("Heating block ended.")
         case _:
             print("Invalid block type.")
@@ -143,23 +143,40 @@ def main():
         return
 
     # Define the schedule with block types
+    # schedule = {
+    #     "07:00-08:00": "wait",
+    #     "08:00-08:30": "heat",
+    #     "08:30-09:30": "wait",
+    #     "09:30-10:30": "wait",
+    #     "10:30-11:00": "heat",
+    #     "11:00-12:00": "wait",
+    #     "12:00-13:00": "wait",
+    #     "13:00-13:30": "heat",
+    #     "13:30-14:30": "wait",
+    #     "14:30-15:30": "wait",
+    #     "15:30-16:00": "heat",
+    #     "16:00-17:00": "wait",
+    #     "17:00-18:00": "wait",
+    #     "18:00-18:30": "heat",
+    #     "18:30-19:30": "wait",
+    #     "19:30-07:00": "sleep"  # Overnight sleep
+    # }
+
     schedule = {
-        "07:00-08:00": "wait",
-        "08:00-08:30": "heat",
-        "08:30-09:30": "wait",
-        "09:30-10:30": "wait",
-        "10:30-11:00": "heat",
-        "11:00-12:00": "wait",
-        "12:00-13:00": "wait",
-        "13:00-13:30": "heat",
-        "13:30-14:30": "wait",
-        "14:30-15:30": "wait",
-        "15:30-16:00": "heat",
-        "16:00-17:00": "wait",
-        "17:00-18:00": "wait",
-        "18:00-18:30": "heat",
-        "18:30-19:30": "wait",
-        "19:30-07:00": "sleep"  # Overnight sleep
+    "11:10-11:25": "heat",  # 15 minutes of heating
+    "11:25-11:40": "wait",  # 15 minutes of waiting
+    "11:40-11:55": "heat",  # 15 minutes of heating
+    "11:55-12:10": "wait",  # 15 minutes of waiting
+    "12:10-12:25": "heat",  # 15 minutes of heating
+    "12:25-12:40": "wait",  # 15 minutes of waiting
+    "12:40-12:55": "heat",  # 15 minutes of heating
+    "12:55-13:10": "wait",  # 15 minutes of waiting
+    "13:10-13:25": "heat",  # 15 minutes of heating
+    "13:25-13:40": "wait",  # 15 minutes of waiting
+    "13:40-13:55": "heat",  # 15 minutes of heating
+    "13:55-14:10": "wait",  # 15 minutes of waiting
+    "14:10-14:30": "heat",  # Final heat phase
+    "14:30-15:30": "sleep"  # Sleep phase to test shutdown behavior
     }
 
     heater.turn_off()
