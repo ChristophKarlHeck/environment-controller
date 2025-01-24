@@ -12,6 +12,8 @@ WP04 = "134.34.225.135"  # Heater
 growLight = SmartPlug(WP03)
 heater = SmartPlug(WP04)
 
+temp_increase = 6 # 6°C temp increase
+
 def read_last_temperature(directory):
     """
     Reads the last temperature from the latest P6*.csv file in the given directory.
@@ -34,6 +36,10 @@ def read_last_temperature(directory):
 
         # Read the file and get the last row
         df = pd.read_csv(os.path.join(directory, latest_file))
+        if df.empty:
+            print("The latest CSV file is empty.")
+            return None
+
         last_row = df.iloc[-1]
 
         # Access temperature values by position using .iloc
@@ -48,41 +54,61 @@ def read_last_temperature(directory):
         return None
 
 
-def wait_for_temperature_or_time(directory, start_temperature, target_increase, max_duration_minutes, check_temp_time):
+def save_target_temperature(temp):
+    """Saves the target temperature to a file."""
+    try:
+        with open("/app/target_temp.txt", "w") as f:
+            f.write(str(temp))
+    except Exception as e:
+        print(f"Error saving target temperature: {e}")
+
+
+def load_target_temperature():
+    """Loads the target temperature from a file."""
+    try:
+        with open("/app/target_temp.txt", "r") as f:
+            return float(f.read())
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        print(f"Error loading target temperature: {e}")
+        return None
+
+
+def delete_target_temperature():
+    """Deletes the target temperature file."""
+    try:
+        if os.path.exists("/app/target_temp.txt"):
+            os.remove("/app/target_temp.txt")
+    except Exception as e:
+        print(f"Error deleting target temperature file: {e}")
+
+
+def control_heater(directory):
     """
-    Waits until either the temperature has increased by the target amount
-    or the maximum time has elapsed.
+    Controls the heater based on the target temperature and current temperature.
     """
+    current_temperature = read_last_temperature(directory)
 
-    target_temperature = start_temperature + target_increase 
-    print(f"Starting {max_duration_minutes}-minute cycle. Target temperature: {target_temperature}°C.")
-    start_time = datetime.now()
+    if current_temperature is None:
+        print("Could not read current temperature. Heater off.")
+        heater.turn_off()
+        return
 
-    while True:
-        current_time = datetime.now()
-        elapsed_time = (current_time - start_time).total_seconds() / 60  # Convert to minutes
+    target_temperature = load_target_temperature()
 
-        # Check if 30 minutes have passed
-        if elapsed_time >= max_duration_minutes:
-            print(f"{max_duration_minutes} minutes elapsed. Turning off the heater.")
-            break
+    if target_temperature is None:
+        target_temperature = current_temperature + temp_increase
+        save_target_temperature(target_temperature)
+        print(f"Target temperature set: {target_temperature}°C.")
 
-        # Read the current temperature
-        current_temperature = read_last_temperature(directory)
-        if current_temperature is None:
-            time.sleep(check_temp_time)
-            continue
+    if current_temperature < target_temperature:
+        print(f"Heating: Current temperature {current_temperature}°C. Target: {target_temperature}°C.")
+        heater.turn_on()
+    else:
+        print(f"Holding temperature: {current_temperature}°C. Heater off.")
+        heater.turn_off()
 
-        # Heat to the target temperature if not reached
-        if current_temperature < target_temperature:
-            print(f"Heating: Current temperature {current_temperature}°C. Target: {target_temperature}°C.")
-            heater.turn_on()
-        else:
-            print(f"Holding temperature: {current_temperature}°C. Heater off.")
-            heater.turn_off()
-
-        print(f"Current temperature: {current_temperature}°C. Elapsed time: {elapsed_time:.2f} minutes. Waiting...")
-        time.sleep(check_temp_time)
 
 def execute_time_block(directory, start_time, end_time, block_type):
     """
@@ -93,17 +119,15 @@ def execute_time_block(directory, start_time, end_time, block_type):
             print("Sleeping during this block. Devices off.")
             growLight.turn_off()
             heater.turn_off()
+            delete_target_temperature()
         case "wait":
             print("Waiting during this block. Light on, heater off.")
             growLight.turn_on()
             heater.turn_off()
         case "heat":
             growLight.turn_on()
-            print("Heating block started.")
-            start_temperature = read_last_temperature(directory)
-            if start_temperature is not None:
-                wait_for_temperature_or_time(directory, start_temperature, 6, (end_time - start_time).total_seconds() / 60 , 20)
-            heater.turn_off()
+            control_heater(directory)
+            delete_target_temperature()
             print("Heating block ended.")
         case _:
             print("Invalid block type.")
@@ -141,9 +165,10 @@ def main():
     heater.turn_off()
     growLight.turn_off()
 
+    last_block = None
+
     while True:
         current_time = datetime.now()
-        current_hour_minute = current_time.strftime("%H:%M")
 
         for time_range, block_type in schedule.items():
             start_str, end_str = time_range.split("-")
@@ -155,16 +180,16 @@ def main():
             )
 
             if end_time < start_time:
-                print(f"Executing block: {block_type} ({start_str}-{end_str})")
                 end_time += timedelta(days=1)  # Handle overnight case
 
             if start_time <= current_time < end_time:
-                print(f"Executing block: {block_type} ({start_str}-{end_str})")
-                execute_time_block(directory, start_time, end_time, block_type)
+                if last_block != block_type:
+                    print(f"Executing block: {block_type} ({start_str}-{end_str})")
+                    execute_time_block(directory, start_time, end_time, block_type)
+                    last_block = block_type
                 break
 
-        # Sleep for 20 seconds to avoid tight looping
-        time.sleep(20)
+        time.sleep(20)  # Sleep to avoid tight looping
 
 if __name__ == "__main__":
     main()
