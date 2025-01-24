@@ -204,10 +204,8 @@ def main():
                 end_time += timedelta(days=1)  # Handle overnight case
 
             if start_time <= current_time < end_time:
-                if last_block != block_type:
-                    print(f"Executing block: {block_type} ({start_str}-{end_str})")
-                    execute_time_block(directory, start_time, end_time, block_type)
-                    last_block = block_type
+                print(f"Executing block: {block_type} ({start_str}-{end_str})")
+                execute_time_block(directory, start_time, end_time, block_type)
                 break
 
         time.sleep(20)  # Sleep to avoid tight looping
