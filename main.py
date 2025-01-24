@@ -100,8 +100,6 @@ def control_heater(directory):
 
     target_temperature = load_target_temperature()
 
-    print(f"Status: Current temperature: {current_temperature}, Target temperature: {target_temperature}")
-
     if target_temperature is None:
         target_temperature = current_temperature + temp_increase
         save_target_temperature(target_temperature)
@@ -133,7 +131,6 @@ def execute_time_block(directory, start_time, end_time, block_type):
         case "heat":
             growLight.turn_on()
             control_heater(directory)
-            print("Heating block ended.")
         case _:
             print("Invalid block type.")
 
